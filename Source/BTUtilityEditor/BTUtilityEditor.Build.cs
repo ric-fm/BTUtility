@@ -19,7 +19,8 @@ public class BTUtilityEditor : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore",
+                "BTUtility"
             }
         );
     }
