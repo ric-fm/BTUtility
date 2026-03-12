@@ -58,6 +58,37 @@ protected:
 
 
 /**
+ * @struct FBTUResponseCurve_Binary
+ * 
+ * Returns 1.0 if the input is greater than or equal to the threshold, otherwise 0.0.
+ * Useful for "all-or-nothing" requirements.
+ */
+USTRUCT(BlueprintType, meta = (DisplayName = "Binary"))
+struct FBTUResponseCurve_Binary : public FBTUResponseCurveBase
+{
+	GENERATED_BODY()
+
+protected:
+	virtual float Evaluate_Internal(float InputValue) const override
+	{
+		return static_cast<float>((InputValue >= Threshold) ^ bInvert);
+	}
+	
+	/** The point at which the utility jumps from 0 to 1 */
+	UPROPERTY(EditAnywhere, meta=(ClampMin=0.0f, ClampMax=1.0f))
+	float Threshold = 0.5f;
+	
+	/** 
+	 * Flips the comparison logic. 
+	 * When false: Returns 1.0 if Input >= Threshold (Pass-high).
+	 * When true: Returns 1.0 if Input < Threshold (Pass-low).
+	 */
+	UPROPERTY(EditAnywhere)
+	bool bInvert = false;
+};
+
+
+/**
  * @struct FBTUResponseCurve_Linear
  * 
  * Direct mapping where Output = Input adjusted by slope and shifts.

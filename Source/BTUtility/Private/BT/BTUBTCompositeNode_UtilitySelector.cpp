@@ -182,9 +182,32 @@ void UBTUBTCompositeNode_UtilitySelector::DescribeRuntimeValues(const UBehaviorT
 	Super::DescribeRuntimeValues(OwnerComp, NodeMemory, Verbosity, Values);
 	
 	const FBTUNodeMemory_UtilitySelector* Memory = CastInstanceNodeMemory<FBTUNodeMemory_UtilitySelector>(NodeMemory);
-	if (Memory && Memory->ExecutionScore > 0.0f)
+	
+	// Check if the utility is currently locked via Blackboard
+	if (bCheckLockUtility)
 	{
-		Values.Add(FString::Printf(TEXT("Score: %.2f"), Memory->ExecutionScore));
+		const bool bUtilityLocked = OwnerComp.GetBlackboardComponent()->GetValueAsBool(UtilityLockKey.SelectedKeyName);
+		Values.Add(FString::Printf(TEXT("Locked: %s"), bUtilityLocked ? TEXT("true") : TEXT("false")));
+	}
+	
+	// Display candidate scores from the last evaluation snapshot
+	TArrayView<const FBTUUtilityScoredCandidate> Candidates = Memory->GetSnapshot();
+	if (Candidates.Num() == CachedUtilities.Num())
+	{
+		for (int32 ChildIndex = 0; ChildIndex < CachedUtilities.Num(); ChildIndex++)
+		{
+			const UBTUBTDecorator_Utility* Utility = CachedUtilities[ChildIndex];
+			const FString ChildName = Utility->GetMyNode()->GetNodeName();
+			
+			const int32 CandidateIndex = Candidates.IndexOfByPredicate(
+			[Index=ChildIndex](const FBTUUtilityScoredCandidate& A)
+			{
+				return A.Index == Index;
+			});
+			
+			FString SelectionMarker = ChildIndex == Memory->CurrentChild ? TEXT("* ") : TEXT("");
+			Values.Add(FString::Printf(TEXT("%s %s (%.2f)"), *SelectionMarker, *ChildName, Candidates[CandidateIndex].Score));
+		}
 	}
 }
 
@@ -239,6 +262,9 @@ void UBTUBTCompositeNode_UtilitySelector::ProcessUtilityTick(UBehaviorTreeCompon
 	
 	TArray<FBTUUtilityScoredCandidate> Candidates;
 	EvaluateUtilities(OwnerComp, Memory, Candidates);
+	
+	// Update the evaluation so GetNextChildHandler can use it immediately
+	Memory->SaveSnapshot(Candidates);
 
 	// Find where our currently executing child stands in the new scores
 	const int32 CurrentChildIndexInResult = Candidates.IndexOfByPredicate(
@@ -258,9 +284,6 @@ void UBTUBTCompositeNode_UtilitySelector::ProcessUtilityTick(UBehaviorTreeCompon
 	// TODO: Add Dynamic Threshold / Intertialisation?
 	if (CurrentChildIndexInResult != 0 && (Candidates[0].Score - Candidates[CurrentChildIndexInResult].Score) >= ScoreThreshold)
 	{
-		// Save the current evaluation so GetNextChildHandler can use it immediately
-		Memory->SaveSnapshot(Candidates);
-        
 		/** 
 		 * To ensure a clean transition and reset decorators, we request execution from the Parent node.
 		 * This forces the tree to flow back through GetNextChildHandler, maintaining internal engine consistency.
