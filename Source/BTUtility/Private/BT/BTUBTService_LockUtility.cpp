@@ -24,3 +24,8 @@ void UBTUBTService_LockUtility::OnCeaseRelevant(UBehaviorTreeComponent& OwnerCom
 {
 	OwnerComp.GetBlackboardComponent()->SetValueAsBool(BlackboardKey.SelectedKeyName, false);
 }
+
+FString UBTUBTService_LockUtility::GetStaticDescription() const
+{
+	return FString::Printf(TEXT("Key: %s"), *BlackboardKey.SelectedKeyName.ToString());
+}
