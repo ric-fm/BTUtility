@@ -2,6 +2,10 @@
 
 **BTUtility** is a lightweight and modular Utility AI framework fully integrated into the **Unreal Engine Behavior Tree** system. It allows developers to create dynamic, emergent AI behaviors by replacing traditional binary selectors with score-based decision-making.
 
+> [!TIP]
+> **See it in action:** Check out the [BTUtility Sample Project](https://github.com/ric-fm/BTUtilitySample) for a basic implementation and usage examples of the framework.
+
+
 > [!WARNING]
 > **Project Status:** This plugin is currently in a **very early research and experimental state**. It was developed as a "for fun" project to explore Utility AI architectures within the Unreal Behavior Tree system. It has not been extensively tested for production environments. Use at your own risk and expect potential API changes.
 
